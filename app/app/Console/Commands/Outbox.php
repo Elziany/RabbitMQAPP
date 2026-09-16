@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\OutboxMessageService;
-use App\Services\RabbitMQPublisher;
+use App\Services\RabbitMQService;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -14,27 +14,27 @@ class Outbox extends Command
 {
 
      public function handle(
-        OutboxMessageService $outbox,
-        RabbitMQPublisher $publisher
+        OutboxMessageService $outboxMessageService,
+        RabbitMQService $rabbitMQService
     ): int {
 
         $this->info('Outbox publisher started...');
 
         while (true) {
 
-            $messages = $outbox->getPending(100);
+            $messages = $outboxMessageService->getPending(100);
 
             foreach ($messages as $message) {
 
                 try {
 
-                    $publisher->publish([
+                    $rabbitMQService->publish([
                         'event_type' => $message->event_type,
                         'payload' => json_decode($message->payload, true),
                         'event_uuid' => $message->event_uuid,
                     ]);
 
-                    $outbox->markAsDispatched($message->id);
+                    $outboxMessageService->markAsDispatched($message->id);
 
                 } catch (\Throwable $e) {
 
