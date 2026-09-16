@@ -9,11 +9,12 @@ use PhpAmqpLib\Message\AMQPMessage;
 class RabbitMQService
 {
     const EXCHANGE_DEFAULT_TYPE = 'direct';
+    const PRESISTANCE_DELIVERY_MODE = 2;
 
     public function publish(array $message)
     {
 
-        $connection = $this->makeConection();
+        $connection = $this->makeConnection();
 
         $channel = $connection->channel();
         $this->createQueue(
@@ -36,7 +37,7 @@ class RabbitMQService
             json_encode($message),
             [
                 'content_type' => 'application/json',
-                'delivery_mode' => 2,
+                'delivery_mode' => self::PRESISTANCE_DELIVERY_MODE,
             ]
         );
         $channel->basic_publish(
@@ -48,7 +49,7 @@ class RabbitMQService
         $connection->close();
     }
 
-    public function makeConection(): AMQPStreamConnection
+    public function makeConnection(): AMQPStreamConnection
     {
         $config = config('queue.connections.rabbitmq');
 
